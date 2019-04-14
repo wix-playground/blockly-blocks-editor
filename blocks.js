@@ -1,11 +1,21 @@
 const blocklyXML = `<xml class="blockly-toolbox">
+    <category name="Interaction">
+        <block type="grab_element_by_id_with_event"></block>
+        <block type="grab_element_by_id_show_hide"></block>
+    </category>
     <category name="Elements">
         <block type="grab_element_by_id"></block>    
+        <block type="grab_button_by_id"></block>    
+        <block type="grab_image_by_id"></block>    
     </category>
-    <category name="Actions">
+    <category name="Functions">
         <block type="element_show"></block>
+        <block type="element_hide"></block>
+        <block type="element_expand"></block>
+        <block type="element_collapse"></block>
+        <block type="element_scrollto"></block>
     </category>
-    <category name="Interactions">
+    <category name="Events">
         <block type="onready"></block>
         <block type="element_onclick"></block>
         <block type="element_ondblclick"></block>
@@ -19,6 +29,163 @@ const blocklyXML = `<xml class="blockly-toolbox">
 </xml>`;
 
 const blockDefinitions = {
+    GRAB_ELEMENT_BY_ID_WITH_EVENT: {
+        json: {
+            "type": "grab_element_by_id_with_event",
+            "message0": "Grab element with id: %1 %2 and on %3 %4 do: %5",
+            "args0": [
+                {
+                    "type": "field_input",
+                    "name": "ID",
+                    "text": "..."
+                },
+                {
+                    "type": "input_dummy"
+                },
+                {
+                    "type": "field_dropdown",
+                    "name": "EVENT",
+                    "options": [
+                        [
+                            "click",
+                            "Click"
+                        ],
+                        [
+                            "double-click",
+                            "DblClick"
+                        ],
+                        [
+                            "mouse in",
+                            "MouseIn"
+                        ],
+                        [
+                            "mouse out",
+                            "MouseOut"
+                        ],
+                        [
+                            "viewport enter",
+                            "ViewportEnter"
+                        ],
+                        [
+                            "viewport leave",
+                            "ViewportLeave"
+                        ]
+                    ]
+                },
+                {
+                    "type": "input_dummy"
+                },
+                {
+                    "type": "input_statement",
+                    "name": "CALLBACK"
+                }
+            ],
+            "previousStatement": null,
+            "nextStatement": null,
+            "colour": 300,
+            "tooltip": "Grab an element and attach an event handler",
+            "helpUrl": "https://www.wix.com/corvid/reference/$w.Element.html"
+        },
+        js: function (block) {
+            const id = block.getFieldValue('ID');
+            const event = block.getFieldValue('EVENT');
+            const callback = Blockly.JavaScript.statementToCode(block, 'CALLBACK');
+            return `$w('#${id}').on${event}(event => {${callback}});`;
+        }
+    },
+    GRAB_ELEMENT_BY_ID_SHOW_HIDE: {
+        json: {
+            "type": "grab_element_by_id_show_hide",
+            "message0": "Grab element with id: %1 %2 and %3 %4 with effect: %5 from: %6 %7 then do: %8",
+            "args0": [
+                {
+                    "type": "field_input",
+                    "name": "ID",
+                    "text": "..."
+                },
+                {
+                    "type": "input_dummy"
+                },
+                {
+                    "type": "field_dropdown",
+                    "name": "ACTION",
+                    "options": [
+                        [
+                            "show",
+                            "show"
+                        ],
+                        [
+                            "hide",
+                            "hide"
+                        ]
+                    ]
+                },
+                {
+                    "type": "input_dummy"
+                },
+                {
+                    "type": "field_dropdown",
+                    "name": "EFFECT",
+                    "options": [
+                        [
+                            "no effect",
+                            "none"
+                        ],
+                        [
+                            "arc",
+                            "arc"
+                        ],
+                        [
+                            "bounce",
+                            "bounce"
+                        ]
+                    ]
+                },
+                {
+                    "type": "field_dropdown",
+                    "name": "DIRECTION",
+                    "options": [
+                        [
+                            "right",
+                            "right"
+                        ],
+                        [
+                            "left",
+                            "left"
+                        ],
+                        [
+                            "top",
+                            "top"
+                        ],
+                        [
+                            "bottom",
+                            "bottom"
+                        ]
+                    ]
+                },
+                {
+                    "type": "input_dummy"
+                },
+                {
+                    "type": "input_statement",
+                    "name": "CALLBACK"
+                }
+            ],
+            "previousStatement": null,
+            "nextStatement": null,
+            "colour": 300,
+            "tooltip": "Grab element and show/hide it",
+            "helpUrl": "https://www.wix.com/corvid/reference/$w.Element.html"
+        },
+        js: function (block) {
+            const id = block.getFieldValue('ID');
+            const action = block.getFieldValue('ACTION');
+            const effect = block.getFieldValue('EFFECT');
+            const direction = block.getFieldValue('DIRECTION');
+            const content = Blockly.JavaScript.statementToCode(block, 'CALLBACK');
+            return `$w('#${id}').${action}(${effect !== 'none' ? `"${effect}", {direction:'${direction}'}` : ''}).then(() => {${content}});`;
+        }
+    },
     GRAB_ELEMENT_BY_ID: {
         json: {
             "type": "grab_element_by_id",
@@ -51,6 +218,130 @@ const blockDefinitions = {
             return `$w('#${id}')${action}`;
         }
     },
+    GRAB_IMAGE_BY_ID: {
+        init(editorAPI) {
+            const input = this.appendDummyInput();
+            function dynamicOptions() {
+                const currentPage = editorAPI.pages.getFocusedPage();
+                const allComps = editorAPI.components.get.byAncestor(currentPage);
+                const options = [];
+
+                if (allComps.length) {
+                    allComps.forEach(compRef => {
+                        const id = editorAPI.components.getNickname(compRef);
+
+                        if (id.startsWith('image')) {
+                            options.push([id, id]);
+                        }
+                    });
+                }
+
+                if (!options.length) {
+                    options.push(['some id', '---']);
+                }
+
+                return options;
+            }
+            const dropdown = new Blockly.FieldDropdown(dynamicOptions);
+            input.appendField('Grab an Image with id');
+            input.appendField(dropdown, 'ID');
+            this.appendDummyInput();
+            this.appendValueInput('ACTION');
+
+            this.setColour(290);
+            this.setTooltip("Grab Image by id");
+            this.setHelpUrl('https://www.wix.com/corvid/reference/$w.Image.html');
+            this.setNextStatement(true);
+            this.setPreviousStatement(true);
+        },
+        js: function (block) {
+            const id = block.getFieldValue('ID');
+            const action = Blockly.JavaScript.statementToCode(block, 'ACTION');
+            return `$w('#${id}')${action}`;
+        }
+    },
+    GRAB_BUTTON_BY_ID: {
+        init(editorAPI) {
+            const input = this.appendDummyInput();
+            function dynamicOptions() {
+                const currentPage = editorAPI.pages.getFocusedPage();
+                const allComps = editorAPI.components.get.byAncestor(currentPage);
+                const options = [];
+
+                if (allComps.length) {
+                    allComps.forEach(compRef => {
+                        const id = editorAPI.components.getNickname(compRef);
+
+                        if (id.startsWith('button')) {
+                            options.push([id, id]);
+                        }
+                    });
+                }
+
+                if (!options.length) {
+                    options.push(['some id', '---'])
+                }
+
+                return options;
+            }
+            const dropdown = new Blockly.FieldDropdown(dynamicOptions);
+            input.appendField('Grab a Button with id');
+            input.appendField(dropdown, 'ID');
+            this.appendDummyInput();
+            this.appendValueInput('ACTION');
+
+            this.setColour(290);
+            this.setTooltip("Grab Button by id");
+            this.setHelpUrl('https://www.wix.com/corvid/reference/$w.Button.html');
+            this.setNextStatement(true);
+            this.setPreviousStatement(true);
+        },
+        js: function (block) {
+            const id = block.getFieldValue('ID');
+            const action = Blockly.JavaScript.statementToCode(block, 'ACTION');
+            return `$w('#${id}')${action}`;
+        }
+    },
+    GRAB_VECTORIMAGE_BY_ID: {
+        init(editorAPI) {
+            const input = this.appendDummyInput();
+            function dynamicOptions() {
+                const currentPage = editorAPI.pages.getFocusedPage();
+                const allComps = editorAPI.components.get.byAncestor(currentPage);
+                const options = [];
+
+                if (allComps.length) {
+                    allComps.forEach(compRef => {
+                        const id = editorAPI.components.getNickname(compRef);
+
+                        if (id.startsWith('button')) {
+                            options.push([id, id]);
+                        }
+                    });
+                } else {
+                    options.push(['some id', '---'])
+                }
+
+                return options;
+            }
+            const dropdown = new Blockly.FieldDropdown(dynamicOptions);
+            input.appendField('Grab a Button with id');
+            input.appendField(dropdown, 'ID');
+            this.appendDummyInput();
+            this.appendValueInput('ACTION');
+
+            this.setColour(290);
+            this.setTooltip("Grab Button by id");
+            this.setHelpUrl('https://www.wix.com/corvid/reference/$w.Button.html');
+            this.setNextStatement(true);
+            this.setPreviousStatement(true);
+        },
+        js: function (block) {
+            const id = block.getFieldValue('ID');
+            const action = Blockly.JavaScript.statementToCode(block, 'ACTION');
+            return `$w('#${id}')${action}`;
+        }
+    },
     ELEMENT_ONCLICK: {
         json: {
             "type": "element_onclick",
@@ -72,7 +363,7 @@ const blockDefinitions = {
         },
         js: function (block) {
             const callback = Blockly.JavaScript.statementToCode(block, 'CALLBACK');
-            return `.onClick(event => {${callback}})`;
+            return `.onClick(event => {${callback}});`;
         }
     },
     ELEMENT_ONDBLCLICK: {
@@ -96,7 +387,7 @@ const blockDefinitions = {
         },
         js: function (block) {
             const callback = Blockly.JavaScript.statementToCode(block, 'CALLBACK');
-            return `.onDblClick(event => {${callback}})`;
+            return `.onDblClick(event => {${callback}});`;
         }
     },
     ELEMENT_ONMOUSEIN: {
@@ -120,7 +411,7 @@ const blockDefinitions = {
         },
         js: function (block) {
             const callback = Blockly.JavaScript.statementToCode(block, 'CALLBACK');
-            return `.onMouseIn(event => {${callback}})`;
+            return `.onMouseIn(event => {${callback}});`;
         }
     },
     ELEMENT_ONMOUSEOUT: {
@@ -144,7 +435,7 @@ const blockDefinitions = {
         },
         js: function (block) {
             const callback = Blockly.JavaScript.statementToCode(block, 'CALLBACK');
-            return `.onMouseOut(event => {${callback}})`;
+            return `.onMouseOut(event => {${callback}});`;
         }
     },
     ELEMENT_ONVIEWPORTENTER: {
@@ -168,7 +459,7 @@ const blockDefinitions = {
         },
         js: function (block) {
             const callback = Blockly.JavaScript.statementToCode(block, 'CALLBACK');
-            return `.onViewportEnter(event => {${callback}})`;
+            return `.onViewportEnter(event => {${callback}});`;
         }
     },
     ELEMENT_ONVIEWPORTLEAVE: {
@@ -192,7 +483,7 @@ const blockDefinitions = {
         },
         js: function (block) {
             const callback = Blockly.JavaScript.statementToCode(block, 'CALLBACK');
-            return `.onViewportLeave(event => {${callback}})`;
+            return `.onViewportLeave(event => {${callback}});`;
         }
     },
     ONREADY: {
@@ -307,7 +598,7 @@ const blockDefinitions = {
         js: function (block) {
             const effectName = block.getFieldValue('EFFECT');
             const content = Blockly.JavaScript.statementToCode(block, 'THEN');
-            return `.show(${effectName !== 'none' ? `"${effectName}"` : ''})${content ? `.then(() => {${content}});` : ';'}`;
+            return `.show(${effectName !== 'none' ? `"${effectName}"` : ''}).then(() => {${content}});`
         }
     },
     ELEMENT_HIDE: {
