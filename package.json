@@ -1,0 +1,29 @@
+{
+  "name": "blockly-blocks-editor",
+  "version": "0.0.1",
+  "description": "Corvid Blocks Editor based on Blockly",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "registry": "https://registry.npmjs.org/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wix-playground/blockly-blocks-editor.git"
+  },
+  "keywords": [
+    "blockly",
+    "corvid",
+    "wix",
+    "blocks",
+    "editor"
+  ],
+  "author": "wix-corvid-wow",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wix-playground/blockly-blocks-editor/issues"
+  },
+  "homepage": "https://github.com/wix-playground/blockly-blocks-editor#readme",
+  "devDependencies": {},
+  "dependencies": {}
+}

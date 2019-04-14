@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="index.js"></script>
+    <script src="blocks.js"></script>
+    <style>
+        #blocklyDiv {
+            width: 600px;
+            height: 400px;
+        }
+
+        #result {
+            width: 600px;
+            height: 400px;
+        }
+    </style>
+</head>
+<body>
+<div id="blocklyDiv"></div>
+
+<textarea id="result"></textarea>
+
+<script>
+    const workspace = Blockly.inject('blocklyDiv',
+        {toolbox: window.blocklyXML});
+
+    function myUpdateFunction(event) {
+        const code = Blockly.JavaScript.workspaceToCode(workspace);
+        document.getElementById('result').value = code;
+    }
+
+    workspace.addChangeListener(myUpdateFunction);
+</script>
+</body>
+</html>
